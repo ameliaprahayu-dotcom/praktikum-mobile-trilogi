@@ -15,6 +15,7 @@ Repositori dokumentasi & source code praktikum Android (Kotlin / Jetpack Compose
 |---|---|---|---|
 | 1 | Pengenalan Mobile Programming & Setup | [Lihat](dokumentasi/pertemuan-01/README.md) | `pertemuan-01` |
 | 2 | Struktur Project, Activity & Lifecycle | [Lihat](dokumentasi/pertemuan-02/README.md) | `pertemuan-02` |
+| 3 | Layout & Komponen UI | [Lihat](dokumentasi/pertemuan-03/README.md) | `pertemuan-03` |
 
 ## Teknologi
 - Kotlin, Jetpack Compose (Material 3)

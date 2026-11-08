@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Trilogi</string>
+    <string name="header_title">Demo Layout &amp; Komponen UI</string>
+    <string name="box_text">Box + Row + Image</string>
+    <string name="badge_android">Android</string>
+    <string name="badge_kotlin">Kotlin</string>
+    <string name="badge_compose">Compose</string>
+    <string name="card_title">Latihan Input Data</string>
+    <string name="label_nama">Masukkan Nama Mahasiswa</string>
+    <string name="label_email">Email</string>
+    <string name="label_prodi">Program Studi</string>
+    <string name="btn_tampilkan">Tampilkan</string>
+    <string name="error_wajib">Wajib diisi!</string>
+    <string name="sapaan">Halo, %1$s! Selamat Belajar Compose.</string>
+    <string name="hasil_detail">Email: %1$s | Prodi: %2$s</string>
+</resources>
