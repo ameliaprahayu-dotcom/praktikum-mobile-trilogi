@@ -1,0 +1,46 @@
+# ===== Android Studio / Gradle =====
+# Build output
+*.apk
+*.aab
+*.aar
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+build/
+captures/
+
+# Gradle
+.gradle/
+.kotlin/
+
+# File konfigurasi lokal (berisi path SDK komputer kamu)
+local.properties
+
+# IDE
+.idea/
+*.iml
+.navigation/
+
+# Native build
+.externalNativeBuild/
+.cxx/
+
+# Keystore & rahasia (JANGAN PERNAH di-upload)
+*.jks
+*.keystore
+google-services.json
+
+# Log & lint
+*.log
+lint/intermediates/
+lint/generated/
+lint/outputs/
+lint/tmp/
+
+# Sistem operasi
+.DS_Store
+Thumbs.db
