@@ -1,125 +1,208 @@
 package com.example.trilogi
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.trilogi.ui.theme.TrilogiTheme
 
 class MainActivity : ComponentActivity() {
-
-    private val TAG = "LIFECYCLE_TAG"
-
-    private var currentStatus by mutableStateOf("onCreate: Aplikasi Dimulai")
-    private var resumeCount by mutableIntStateOf(0)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Log.d(TAG, "onCreate: Activity dibuat dan resource diinisialisasi")
-        currentStatus = "Status: onCreate (Inisialisasi Selesai)"
         setContent {
             TrilogiTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LifecycleScreen(
-                        status = currentStatus,
-                        counter = resumeCount,
-                        modifier = Modifier.padding(innerPadding)
+                    UILayoutDemoScreen(modifier = Modifier.padding(innerPadding))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UILayoutDemoScreen(modifier: Modifier = Modifier) {
+    var nameInput by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var prodi by rememberSaveable { mutableStateOf("") }
+
+    var submittedName by rememberSaveable { mutableStateOf("") }
+    var submittedEmail by rememberSaveable { mutableStateOf("") }
+    var submittedProdi by rememberSaveable { mutableStateOf("") }
+
+    var namaError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var prodiError by remember { mutableStateOf<String?>(null) }
+
+    // string diambil DI LUAR onClick (stringResource hanya boleh di composable)
+    val msgWajib = stringResource(R.string.error_wajib)
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // 1. Header
+        Text(
+            text = stringResource(R.string.header_title),
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        HorizontalDivider()
+
+        // 2. Box berisi Row { Image + Text }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    RoundedCornerShape(12.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp)
+                )
+                Text(
+                    text = stringResource(R.string.box_text),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        // 3. Row SpaceBetween berisi 3 BadgeCard
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            BadgeCard(stringResource(R.string.badge_android), Color(0xFFC8E6C9))
+            BadgeCard(stringResource(R.string.badge_kotlin), Color(0xFFD1C4E9))
+            BadgeCard(stringResource(R.string.badge_compose), Color(0xFFBBDEFB))
+        }
+
+        // 4. Card form: Nama, Email, Prodi + validasi wajib isi
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.card_title),
+                    fontWeight = FontWeight.Bold
+                )
+
+                OutlinedTextField(
+                    value = nameInput,
+                    onValueChange = { nameInput = it; namaError = null },
+                    label = { Text(stringResource(R.string.label_nama)) },
+                    isError = namaError != null,
+                    supportingText = { namaError?.let { Text(it) } },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it; emailError = null },
+                    label = { Text(stringResource(R.string.label_email)) },
+                    isError = emailError != null,
+                    supportingText = { emailError?.let { Text(it) } },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = prodi,
+                    onValueChange = { prodi = it; prodiError = null },
+                    label = { Text(stringResource(R.string.label_prodi)) },
+                    isError = prodiError != null,
+                    supportingText = { prodiError?.let { Text(it) } },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Button(
+                    onClick = {
+                        var valid = true
+                        if (nameInput.isBlank()) { namaError = msgWajib; valid = false }
+                        if (email.isBlank()) { emailError = msgWajib; valid = false }
+                        if (prodi.isBlank()) { prodiError = msgWajib; valid = false }
+                        if (valid) {
+                            submittedName = nameInput
+                            submittedEmail = email
+                            submittedProdi = prodi
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text(stringResource(R.string.btn_tampilkan))
+                }
+
+                if (submittedName.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.sapaan, submittedName),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = stringResource(R.string.hasil_detail, submittedEmail, submittedProdi)
                     )
                 }
             }
         }
     }
-
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart: Layar mulai terlihat oleh pengguna")
-        currentStatus = "Status: onStart (Aplikasi Terlihat)"
-    }
-
-    override fun onResume() {
-        super.onResume()
-        resumeCount++
-        Log.d(TAG, "onResume: Aplikasi aktif (Fase ke-$resumeCount)")
-        currentStatus = "Status: onResume (Aplikasi Siap Digunakan)"
-        Toast.makeText(this, "onResume ke-$resumeCount", Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d(TAG, "onPause: Aplikasi kehilangan fokus")
-        currentStatus = "Status: onPause (Kehilangan Fokus)"
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Log.d(TAG, "onStop: Aplikasi tidak terlihat (background)")
-        currentStatus = "Status: onStop (Di Background)"
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-        Log.d(TAG, "onRestart: Aplikasi dibuka kembali setelah onStop")
-        currentStatus = "Status: onRestart (Dibuka Kembali)"
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy: Activity dihancurkan dan memori dibersihkan")
-    }
 }
 
 @Composable
-fun LifecycleScreen(status: String, counter: Int, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+fun BadgeCard(title: String, color: Color) {
+    Surface(
+        color = color,
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.padding(4.dp)
     ) {
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Demo Activity Lifecycle",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = status)
-                Text(text = "Jumlah onResume: $counter")
-            }
-        }
         Text(
-            text = "Cara uji: tekan Home, buka lagi dari Recent Apps, putar layar, " +
-                    "lalu amati Logcat dengan filter LIFECYCLE_TAG."
+            text = title,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun LifecyclePreview() {
+fun UILayoutDemoPreview() {
     TrilogiTheme {
-        LifecycleScreen(status = "Status: onCreate (Inisialisasi Selesai)", counter = 1)
+        UILayoutDemoScreen()
     }
 }
