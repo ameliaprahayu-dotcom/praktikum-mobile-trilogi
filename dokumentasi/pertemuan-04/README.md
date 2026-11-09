@@ -5,7 +5,8 @@ Aplikasi Jetpack Compose dengan tiga layar (MainActivity, DetailActivity, Summar
 yang dihubungkan memakai Explicit Intent. Data dikirim dengan putExtra dalam tiga tipe
 (String, Int, Boolean) dan diambil kembali dengan getStringExtra, getIntExtra, dan
 getBooleanExtra beserta nilai default. Ditambahkan dua Implicit Intent: ACTION_DIAL
-(membuka aplikasi telepon) dan ACTION_VIEW (membuka browser).
+(membuka aplikasi telepon) dan ACTION_VIEW (membuka browser), keduanya diamankan
+dengan try/catch ActivityNotFoundException.
 
 ## Alur Navigasi
 - Layar 1 (MainActivity): input nama, tombol Explicit Intent, dan dua tombol Implicit Intent.
@@ -14,20 +15,11 @@ getBooleanExtra beserta nilai default. Ditambahkan dua Implicit Intent: ACTION_D
 
 ## Screenshot
 
-### 1. Layar 1 (MainActivity)
-![Layar 1](screenshots/01-layar-1-main.png)
+### 1. Kode Intent di Android Studio
+![Kode Intent](screenshots/01-kode-android-studio.png)
 
-### 2. Layar 2 (DetailActivity) - data String, Int, Boolean
-![Layar 2](screenshots/02-layar-2-detail.png)
-
-### 3. Layar 3 (SummaryActivity)
-![Layar 3](screenshots/03-layar-3-summary.png)
-
-### 4. Implicit Intent 1 - ACTION_DIAL
-![Implicit dial](screenshots/04-implicit-dial.png)
-
-### 5. Implicit Intent 2 - ACTION_VIEW
-![Implicit web](screenshots/05-implicit-web.png)
+### 2. Tampilan Layar 1 (Preview)
+![Preview Layar 1](screenshots/02-preview-layar-1.png)
 
 ## Komponen yang Dipakai
 | Komponen | Fungsi |
@@ -38,7 +30,7 @@ getBooleanExtra beserta nilai default. Ditambahkan dua Implicit Intent: ACTION_D
 | ACTION_VIEW | Membuka website di browser |
 | Elvis (?:) dan ifBlank | Nilai default "Guest" bila data kosong atau null |
 | finish() | Menghapus Activity dari back stack |
-| try / catch | Mencegah crash (ActivityNotFoundException) bila tidak ada aplikasi pemroses |
+| try / catch | Mencegah crash bila tidak ada aplikasi pemroses |
 | AndroidManifest.xml | Mendaftarkan DetailActivity dan SummaryActivity (exported=false) |
 
 ## Kode
