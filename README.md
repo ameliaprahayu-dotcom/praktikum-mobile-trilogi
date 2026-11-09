@@ -18,6 +18,7 @@ Repositori dokumentasi & source code praktikum Android (Kotlin / Jetpack Compose
 | 3 | Layout & Komponen UI | [Lihat](dokumentasi/pertemuan-03/README.md) | `pertemuan-03` |
 | 4 | Event Handling & Navigasi (Intent) | [Lihat](dokumentasi/pertemuan-04/README.md) | `pertemuan-04` |
 | 5 | Input Validation & State Management | [Lihat](dokumentasi/pertemuan-05/README.md) | `pertemuan-05` |
+| 6 | Penyimpanan Data Lokal & Room Database | [Lihat](dokumentasi/pertemuan-06/README.md) | `pertemuan-06` |
 
 ## Teknologi
 - Kotlin, Jetpack Compose (Material 3)
