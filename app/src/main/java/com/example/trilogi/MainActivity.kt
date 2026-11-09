@@ -1,197 +1,231 @@
 package com.example.trilogi
 
 import android.os.Bundle
-import android.util.Patterns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.trilogi.ui.theme.TrilogiTheme
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             TrilogiTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    FormulirBeasiswaScreen()
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    BukuCatatanScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
     }
 }
 
+// Layar berstatus: menghubungkan UI dengan database Room
 @Composable
-fun FormulirBeasiswaScreen() {
-    // STATE MANAGEMENT: rememberSaveable = padanan onSaveInstanceState di Compose.
-    // Mencegah 'The Disappearing Data Problem' (state loss) saat layar diputar.
-    var nama by rememberSaveable { mutableStateOf("") }
-    var nim by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("") }
-    var ipk by rememberSaveable { mutableStateOf("") }
+fun BukuCatatanScreen(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val dao = remember { AppDatabase.getDatabase(context).bukuCatatanDao() }
+    val scope = rememberCoroutineScope()
+    val daftarCatatan = remember { mutableStateListOf<BukuCatatanEntity>() }
 
-    // Pesan error spesifik per field
-    var namaError by rememberSaveable { mutableStateOf<String?>(null) }
-    var nimError by rememberSaveable { mutableStateOf<String?>(null) }
-    var emailError by rememberSaveable { mutableStateOf<String?>(null) }
-    var ipkError by rememberSaveable { mutableStateOf<String?>(null) }
-    var statusMessage by rememberSaveable { mutableStateOf("") }
+    // READ saat layar pertama tampil -> bukti data tetap ada setelah app di-kill
+    LaunchedEffect(Unit) {
+        val data = withContext(Dispatchers.IO) { dao.getAllCatatan() }
+        daftarCatatan.clear()
+        daftarCatatan.addAll(data)
+    }
 
-    val scrollState = rememberScrollState()
+    BukuCatatanContent(
+        daftar = daftarCatatan,
+        onSimpan = { judul, kategori, isi ->
+            val tanggal = SimpleDateFormat(
+                "dd MMM yyyy HH:mm",
+                Locale.forLanguageTag("id-ID")
+            ).format(Date())
+            val dataBaru = BukuCatatanEntity(
+                judul = judul.trim(),
+                isi = isi.trim(),
+                kategori = kategori.trim(),
+                tanggalDibuat = tanggal
+            )
+            scope.launch(Dispatchers.IO) { // background thread
+                dao.insertCatatan(dataBaru)
+                val listData = dao.getAllCatatan()
+                withContext(Dispatchers.Main) { // kembali ke UI thread
+                    daftarCatatan.clear()
+                    daftarCatatan.addAll(listData)
+                }
+            }
+        },
+        modifier = modifier
+    )
+}
+
+// Layar UI murni (tanpa database) supaya bisa tampil di Preview
+@Composable
+fun BukuCatatanContent(
+    daftar: List<BukuCatatanEntity>,
+    onSimpan: (String, String, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var judul by rememberSaveable { mutableStateOf("") }
+    var kategori by rememberSaveable { mutableStateOf("") }
+    var isi by rememberSaveable { mutableStateOf("") }
+
+    var judulError by remember { mutableStateOf<String?>(null) }
+    var kategoriError by remember { mutableStateOf<String?>(null) }
+    var isiError by remember { mutableStateOf<String?>(null) }
+
+    val msgWajib = "Wajib diisi!"
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .safeDrawingPadding()          // agar tidak tertutup status bar / keyboard
-            .padding(24.dp)
-            .verticalScroll(scrollState),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Formulir Pendaftaran Beasiswa",
-            fontSize = 20.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
-        HorizontalDivider()
+        Text(text = "Buku Catatan", fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
-        // INPUT: Nama
         OutlinedTextField(
-            value = nama,
-            onValueChange = {
-                nama = it
-                namaError = null   // instant feedback: error hilang saat mengetik
-            },
-            label = { Text("Nama Lengkap") },
-            isError = namaError != null,
-            supportingText = { namaError?.let { Text(it) } },
-            modifier = Modifier.fillMaxWidth()
+            value = judul,
+            onValueChange = { judul = it; judulError = null },
+            label = { Text("Judul") },
+            isError = judulError != null,
+            supportingText = { judulError?.let { Text(it) } },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
-        // INPUT: NIM (8-10 digit angka)
         OutlinedTextField(
-            value = nim,
-            onValueChange = {
-                nim = it
-                nimError = null
-            },
-            label = { Text("NIM") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            isError = nimError != null,
-            supportingText = { nimError?.let { Text(it) } },
-            modifier = Modifier.fillMaxWidth()
+            value = kategori,
+            onValueChange = { kategori = it; kategoriError = null },
+            label = { Text("Kategori") },
+            isError = kategoriError != null,
+            supportingText = { kategoriError?.let { Text(it) } },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
-        // INPUT: Email
         OutlinedTextField(
-            value = email,
-            onValueChange = {
-                email = it
-                emailError = null
-            },
-            label = { Text("Email Mahasiswa") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            isError = emailError != null,
-            supportingText = { emailError?.let { Text(it) } },
-            modifier = Modifier.fillMaxWidth()
+            value = isi,
+            onValueChange = { isi = it; isiError = null },
+            label = { Text("Isi Catatan") },
+            isError = isiError != null,
+            supportingText = { isiError?.let { Text(it) } },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2
         )
-
-        // INPUT: IPK (Double 0.00 - 4.00)
-        OutlinedTextField(
-            value = ipk,
-            onValueChange = {
-                ipk = it
-                ipkError = null
-            },
-            label = { Text("IPK") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            isError = ipkError != null,
-            supportingText = { ipkError?.let { Text(it) } },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = {
-                var isValid = true
-
-                // Validasi Nama
-                if (nama.isBlank()) {
-                    namaError = "Nama wajib diisi!"
-                    isValid = false
-                }
-
-                // Validasi NIM: hanya angka, panjang 8-10 digit
-                if (!nim.all { it.isDigit() } || nim.length !in 8..10) {
-                    nimError = "NIM harus berupa angka 8 hingga 10 digit!"
-                    isValid = false
-                }
-
-                // Validasi Email: Patterns.EMAIL_ADDRESS
-                if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
-                    emailError = "Format email tidak valid!"
-                    isValid = false
-                }
-
-                // Validasi IPK: koma diterima sebagai desimal; konversi aman dengan toDoubleOrNull()
-                val ipkValue = ipk.trim().replace(',', '.').toDoubleOrNull()
-                if (ipkValue == null || ipkValue < 0.0 || ipkValue > 4.0) {
-                    ipkError = "IPK harus berupa angka antara 0.00 - 4.00!"
-                    isValid = false
-                }
-
-                if (isValid && ipkValue != null) {
-                    val ipkTeks = String.format(Locale.US, "%.2f", ipkValue)
-                    statusMessage = "Pendaftaran Berhasil Disimpan!\n\n" +
-                            "Nama: ${nama.trim()}\n" +
-                            "NIM: $nim\n" +
-                            "Email: ${email.trim()}\n" +
-                            "IPK: $ipkTeks"
-                } else {
-                    statusMessage = ""
+                var valid = true
+                if (judul.isBlank()) { judulError = msgWajib; valid = false }
+                if (kategori.isBlank()) { kategoriError = msgWajib; valid = false }
+                if (isi.isBlank()) { isiError = msgWajib; valid = false }
+                if (valid) {
+                    onSimpan(judul, kategori, isi)
+                    judul = ""; kategori = ""; isi = ""
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.align(Alignment.End)
         ) {
-            Text("Submit Pendaftaran")
+            Text("Simpan Catatan")
         }
 
-        // Output hasil
-        if (statusMessage.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Text(
-                    text = statusMessage,
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+        HorizontalDivider()
+
+        Text(
+            text = "Daftar Catatan (${daftar.size})",
+            fontWeight = FontWeight.Bold
+        )
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(daftar, key = { it.id }) { catatan ->
+                CatatanCard(catatan)
             }
         }
     }
 }
 
-@Preview(showBackground = true, name = "Preview Formulir Beasiswa")
 @Composable
-fun FormulirBeasiswaScreenPreview() {
-    TrilogiTheme {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            FormulirBeasiswaScreen()
+fun CatatanCard(catatan: BukuCatatanEntity) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(text = catatan.judul, fontWeight = FontWeight.Bold)
+            Text(
+                text = "${catatan.kategori} \u2022 ${catatan.tanggalDibuat}",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = catatan.isi)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BukuCatatanPreview() {
+    TrilogiTheme {
+        BukuCatatanContent(
+            daftar = listOf(
+                BukuCatatanEntity(
+                    id = 2, judul = "Tugas Mobile", isi = "Kerjakan latihan Room Database",
+                    kategori = "Kuliah", tanggalDibuat = "09 Nov 2026 15:00"
+                ),
+                BukuCatatanEntity(
+                    id = 1, judul = "Belanja", isi = "Beli kuota internet",
+                    kategori = "Pribadi", tanggalDibuat = "09 Nov 2026 14:30"
+                )
+            ),
+            onSimpan = { _, _, _ -> }
+        )
     }
 }
